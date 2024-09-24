@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import axios from "axios";
 import { useState } from "react";
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
   const [result, setResult] = useState<{
     is_fraudulent: boolean;
     fraud_probability: number;
+    error?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,23 +36,20 @@ export default function Home() {
         currentTime.getMinutes() * 60 +
         currentTime.getSeconds();
 
-      const response = await fetch("http://localhost:8000/predict/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          card_number: cardNumber,
-          amount: parseFloat(amount),
-          time: secondsSinceMidnight,
-        }),
+      const { data } = await axios.post("http://localhost:8000/predict/", {
+        card_number: cardNumber,
+        amount: parseFloat(amount),
+        time: secondsSinceMidnight,
       });
 
-      const data = await response.json();
       setResult(data);
     } catch (error) {
       console.error("Error:", error);
-      setResult({ is_fraudulent: false, fraud_probability: 0 }); // Update to handle error state
+      setResult({
+        is_fraudulent: false,
+        fraud_probability: 0,
+        error: "An error occurred while processing your request.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +61,7 @@ export default function Home() {
         <CardHeader>
           <CardTitle>Credit Card Fraud Detection</CardTitle>
           <CardDescription>
-            Enter credit card details to check if it&pos;s legitimate or
+            Enter credit card details to check if it&apos;s legitimate or
             fraudulent.
           </CardDescription>
         </CardHeader>
@@ -99,19 +98,26 @@ export default function Home() {
       </Card>
       {result && (
         <Card className="mt-4 p-4">
-          <p className="text-center font-semibold">
-            Result:{" "}
-            <span
-              className={
-                result.is_fraudulent ? "text-red-600" : "text-green-600"
-              }
-            >
-              {result.is_fraudulent ? "Fraudulent" : "Legitimate"}
-            </span>
-          </p>
-          <p className="text-center">
-            Fraud Probability: {(result.fraud_probability * 100).toFixed(2)}%
-          </p>
+          {result.error ? (
+            <p className="text-center text-red-600">{result.error}</p>
+          ) : (
+            <>
+              <p className="text-center font-semibold">
+                Result:{" "}
+                <span
+                  className={
+                    result.is_fraudulent ? "text-red-600" : "text-green-600"
+                  }
+                >
+                  {result.is_fraudulent ? "Fraudulent" : "Legitimate"}
+                </span>
+              </p>
+              <p className="text-center">
+                Fraud Probability: {(result.fraud_probability * 100).toFixed(2)}
+                %
+              </p>
+            </>
+          )}
         </Card>
       )}
     </main>

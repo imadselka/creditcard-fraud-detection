@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from sklearn.preprocessing import StandardScaler
+import joblib
 
 app = FastAPI()
 
@@ -17,13 +18,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load the trained model
+# Load the trained model and scaler
 model_path = os.path.join(os.path.dirname(__file__), '..', 'model', 'best_fraud_detection_model.pkl')
+scaler_path = os.path.join(os.path.dirname(__file__), '..', 'model', 'scaler.pkl')
+
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
 
-# Initialize StandardScaler
-scaler = StandardScaler()
+scaler = joblib.load(scaler_path)
 
 class CreditCardData(BaseModel):
     card_number: str
@@ -55,12 +57,11 @@ def extract_features(card_number: str, amount: float, time: float):
     # Pad or truncate to 16 digits
     card_features = card_features[:16] + [0] * (16 - len(card_features))
     
-    # Scale amount and time
-    scaled_amount = scaler.fit_transform([[amount]])[0][0]
-    scaled_time = scaler.fit_transform([[time]])[0][0]
+    # Scale amount and time using the pre-fitted scaler
+    scaled_features = scaler.transform([[amount, time]])[0]
     
     # Combine all features
-    features = card_features + [scaled_amount, scaled_time]
+    features = card_features + list(scaled_features)
     
     # Pad with zeros to match the 30 features expected by the model
     features = features + [0] * (30 - len(features))
@@ -74,12 +75,8 @@ def predict(data: CreditCardData):
 
     try:
         features = extract_features(data.card_number, data.amount, data.time)
-        print(f"Extracted Features: {features}")  # Debugging line
-
         prediction = model.predict(features)
         probability = model.predict_proba(features)[0][1]  # Probability of fraud
-        
-        print(f"Prediction: {prediction}, Probability: {probability}")  # Debugging line
         
         return {
             "prediction": int(prediction[0]),
