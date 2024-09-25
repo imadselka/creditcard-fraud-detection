@@ -1,16 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { useState } from "react";
 
@@ -30,19 +20,12 @@ export default function Home() {
     setResult(null);
 
     try {
-      const currentTime = new Date();
-      const secondsSinceMidnight =
-        currentTime.getHours() * 3600 +
-        currentTime.getMinutes() * 60 +
-        currentTime.getSeconds();
-
-      const { data } = await axios.post("http://localhost:8000/predict/", {
+      const response = await axios.post("http://localhost:8000/predict/", {
         card_number: cardNumber,
         amount: parseFloat(amount),
-        time: secondsSinceMidnight,
       });
 
-      setResult(data);
+      setResult(response.data);
     } catch (error) {
       console.error("Error:", error);
       setResult({
@@ -56,70 +39,64 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Credit Card Fraud Detection</CardTitle>
-          <CardDescription>
-            Enter credit card details to check if it&apos;s legitimate or
-            fraudulent.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="cardNumber">Credit Card Number</Label>
-                <Input
-                  id="cardNumber"
-                  placeholder="Enter credit card number"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="amount">Transaction Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Enter transaction amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-            </div>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Checking..." : "Check Card"}
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 className="text-2xl font-bold mb-4">Fraud Detection</h1>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Card Number
+            </label>
+            <input
+              type="text"
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Amount
+            </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="outline"
+            className="flex items-center justify-center w-full"
+          >
+            {isLoading ? "Checking..." : "Check Fraud"}
           </Button>
-        </CardFooter>
-      </Card>
-      {result && (
-        <Card className="mt-4 p-4">
-          {result.error ? (
-            <p className="text-center text-red-600">{result.error}</p>
-          ) : (
-            <>
-              <p className="text-center font-semibold">
-                Result:{" "}
-                <span
-                  className={
-                    result.is_fraudulent ? "text-red-600" : "text-green-600"
-                  }
-                >
-                  {result.is_fraudulent ? "Fraudulent" : "Legitimate"}
-                </span>
-              </p>
-              <p className="text-center">
-                Fraud Probability: {(result.fraud_probability * 100).toFixed(2)}
-                %
-              </p>
-            </>
-          )}
-        </Card>
-      )}
-    </main>
+        </form>
+
+        {result && (
+          <div className="mt-6">
+            {result.error ? (
+              <p className="text-red-500">{result.error}</p>
+            ) : (
+              <div>
+                <p>
+                  <strong>Is Fraudulent:</strong>{" "}
+                  {result.is_fraudulent ? "Yes" : "No"}
+                </p>
+                <p>
+                  <strong>Fraud Probability:</strong>{" "}
+                  {result.fraud_probability.toFixed(4)}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
