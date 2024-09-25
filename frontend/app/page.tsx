@@ -23,7 +23,7 @@ export default function Home() {
     setResult(null);
 
     try {
-      const response = await axios.post("http://localhost:8000/predict/", {
+      const response = await axios.post(`${process.env.API_URL}/predict/`, {
         card_number: cardNumber,
         amount: parseFloat(amount),
       });

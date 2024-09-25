@@ -7,25 +7,22 @@ import numpy as np
 
 app = FastAPI()
 
-# Add CORS middleware
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Add your frontend URL
+    allow_origins=["*"],  
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
-
-# Pydantic model for incoming request data
 class TransactionData(BaseModel):
     card_number: str
     amount: float
 
-# Load your trained model and scaler
 model = joblib.load("best_fraud_detection_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# Luhn algorithm to validate card number
 def luhn_algorithm(card_number):
     digits = [int(d) for d in str(card_number) if d.isdigit()]
     checksum = 0
