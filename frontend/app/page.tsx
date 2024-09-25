@@ -1,7 +1,10 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import axios from "axios";
+import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 
 export default function Home() {
@@ -10,7 +13,7 @@ export default function Home() {
   const [result, setResult] = useState<{
     is_fraudulent: boolean;
     fraud_probability: number;
-    error?: string;
+    is_valid_card: boolean;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,9 +32,9 @@ export default function Home() {
     } catch (error) {
       console.error("Error:", error);
       setResult({
-        is_fraudulent: false,
-        fraud_probability: 0,
-        error: "An error occurred while processing your request.",
+        is_fraudulent: true,
+        fraud_probability: 1,
+        is_valid_card: false,
       });
     } finally {
       setIsLoading(false);
@@ -40,63 +43,85 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-4">Fraud Detection</h1>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Card Number
-            </label>
-            <input
-              type="text"
-              value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
-              required
-            />
-          </div>
+      <Card className="w-[400px]">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Fraud Detection</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cardNumber">Card Number</Label>
+              <Input
+                id="cardNumber"
+                type="text"
+                value={cardNumber}
+                onChange={(e) => setCardNumber(e.target.value)}
+                required
+              />
+            </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Amount
-            </label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount</Label>
+              <Input
+                id="amount"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+            </div>
 
-          <Button
-            type="submit"
-            variant="outline"
-            className="flex items-center justify-center w-full"
-          >
-            {isLoading ? "Checking..." : "Check Fraud"}
-          </Button>
-        </form>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Checking..." : "Check Fraud"}
+            </Button>
+          </form>
 
-        {result && (
-          <div className="mt-6">
-            {result.error ? (
-              <p className="text-red-500">{result.error}</p>
-            ) : (
-              <div>
-                <p>
-                  <strong>Is Fraudulent:</strong>{" "}
-                  {result.is_fraudulent ? "Yes" : "No"}
-                </p>
-                <p>
-                  <strong>Fraud Probability:</strong>{" "}
-                  {result.fraud_probability.toFixed(4)}
-                </p>
+          {result && (
+            <div className="mt-6 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Card Validity:</span>
+                {result.is_valid_card ? (
+                  <div className="flex items-center text-green-500">
+                    <CheckCircle className="w-5 h-5 mr-1" />
+                    Valid
+                  </div>
+                ) : (
+                  <div className="flex items-center text-red-500">
+                    <XCircle className="w-5 h-5 mr-1" />
+                    Invalid
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )}
-      </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Fraud Status:</span>
+                {result.is_fraudulent ? (
+                  <div className="flex items-center text-red-500">
+                    <XCircle className="w-5 h-5 mr-1" />
+                    Fraudulent
+                  </div>
+                ) : (
+                  <div className="flex items-center text-green-500">
+                    <CheckCircle className="w-5 h-5 mr-1" />
+                    Not Fraudulent
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Fraud Probability:</span>
+                <span
+                  className={
+                    result.fraud_probability > 0.5
+                      ? "text-red-500"
+                      : "text-green-500"
+                  }
+                >
+                  {(result.fraud_probability * 100).toFixed(2)}%
+                </span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

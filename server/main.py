@@ -36,15 +36,13 @@ def luhn_algorithm(card_number):
         checksum += sum(divmod(d * 2, 10))
     return checksum % 10 == 0
 
-# Route for checking fraud detection
 @app.post("/predict/")
 async def predict(transaction: TransactionData):
     card_number = transaction.card_number
     amount = transaction.amount
 
     # Validate card number using Luhn algorithm
-    if not luhn_algorithm(card_number):
-        raise HTTPException(status_code=400, detail="Invalid card number")
+    is_valid_card = luhn_algorithm(card_number)
 
     # Extract features from card number
     card_features = [int(digit) for digit in card_number if digit.isdigit()]
@@ -67,8 +65,9 @@ async def predict(transaction: TransactionData):
     probability = model.predict_proba(features)[0][1]
 
     return {
-        "is_fraudulent": bool(prediction[0]),
-        "fraud_probability": float(probability)
+        "is_fraudulent": bool(prediction[0]) or not is_valid_card,
+        "fraud_probability": float(probability),
+        "is_valid_card": is_valid_card
     }
 
 @app.get("/")
