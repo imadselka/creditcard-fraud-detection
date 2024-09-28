@@ -56,3 +56,6 @@ This project uses the following key dependencies:
 - **FastAPI**: A modern web framework for building APIs with Python.
 - **Axios**: A promise-based HTTP client for making requests.
 - **Shadcn**: A set of accessible UI components that uses **Radix UI**.
+
+
+![Alt](https://repobeats.axiom.co/api/embed/008a3ea1647eaddb981053651a85bc77ac911a8f.svg "Repobeats analytics image")
